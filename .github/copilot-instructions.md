@@ -102,3 +102,27 @@ all activity to Airtable, updates record statuses throughout the pipeline
 four components end-to-end without manual intervention
 
 ## Repository Structure
+granulyst/
+├── .github/
+│   └── copilot-instructions.md
+├── docs/
+│   └── checkpoint2-audit.md
+├── screenshots/
+├── components/
+│   ├── ingestion/
+│   ├── ai-core/
+│   ├── specialist/
+│   └── integration/
+└── prompt-log-don.md
+
+## Pipeline Flow
+NVD API / RSS Feeds
+↓
+n8n (Ingestion) → Airtable: Vulnerabilities [status: new]
+↓
+Flowise AI Core → Airtable: Vulnerabilities [status: analyzed]
+→ Airtable: Relevant Findings [if tech stack match]
+↓
+n8n (Specialist) → Airtable: Alerts [if CRITICAL or HIGH]
+↓
+n8n (Integration) → Slack notification
