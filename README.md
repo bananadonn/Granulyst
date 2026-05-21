@@ -1,2 +1,0 @@
-# Granulyst
-granular analyst
