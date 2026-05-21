@@ -1,0 +1,375 @@
+{
+  "name": "Granulyst - Ingestion",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fa0fb5bd-5612-4f22-a4be-e2ad38f4b9c7",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://services.nvd.nist.gov/rest/json/cves/2.0",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "pubStartDate",
+              "value": "={{ $json.start_date }}"
+            },
+            {
+              "name": "pubEndDate",
+              "value": "={{ $json.end_date }}"
+            },
+            {
+              "name": "resultsPerPage",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        0
+      ],
+      "id": "393f8ec4-b385-4cf8-999f-32bc5c06c9c0",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RzodVU2CXAwSN8V5",
+          "name": "NVD API KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4d243aa5-a46d-406c-ba7e-090674573f61",
+              "name": "start_date",
+              "value": "={{ $now.minus(6, 'hours').toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "f19e13d2-db73-44f9-946e-63e837c22846",
+              "name": "end_date",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        0
+      ],
+      "id": "40fca23a-c3c3-4b84-8a80-ebd7362ae5a0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "vulnerabilities",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "id": "0af45511-1acb-4136-af96-c67f482229a3",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app7ozciMQXlVUIA6",
+          "mode": "list",
+          "cachedResultName": "CAPSTONE",
+          "cachedResultUrl": "https://airtable.com/app7ozciMQXlVUIA6"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsw6GEmSjTdNWNo",
+          "mode": "list",
+          "cachedResultName": "Vulnerabilities",
+          "cachedResultUrl": "https://airtable.com/app7ozciMQXlVUIA6/tblsw6GEmSjTdNWNo"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "cve_id": "={{ $json.cve.id }}",
+            "title": "={{ $json.cve.descriptions[0].value.slice(0, 100) }}",
+            "raw_description": "={{ $json.cve.descriptions[0].value }}",
+            "cvss_score": "={{ $json.cve.metrics?.cvssMetricV31?.[0]?.cvssData?.baseScore ?? $json.cve.metrics?.cvssMetricV40?.[0]?.cvssData?.baseScore ?? null }}",
+            "severity": "={{ $json.cve.metrics?.cvssMetricV31?.[0]?.cvssData?.baseSeverity ?? $json.cve.metrics?.cvssMetricV40?.[0]?.cvssData?.baseSeverity ?? \"INFO\" }}",
+            "source_url": "={{ \"https://nvd.nist.gov/vuln/detail/\" + $json.cve.id }}",
+            "date": "={{ $json.cve.published }}",
+            "status": "new"
+          },
+          "matchingColumns": [
+            "cve_id"
+          ],
+          "schema": [
+            {
+              "id": "cve_id",
+              "displayName": "cve_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "raw_description",
+              "displayName": "raw_description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "severity",
+              "displayName": "severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "CRITICAL",
+                  "value": "CRITICAL"
+                },
+                {
+                  "name": "HIGH",
+                  "value": "HIGH"
+                },
+                {
+                  "name": "MEDIUM",
+                  "value": "MEDIUM"
+                },
+                {
+                  "name": "LOW",
+                  "value": "LOW"
+                },
+                {
+                  "name": "INFO",
+                  "value": "INFO"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "affected_tech",
+              "displayName": "affected_tech",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "cvss_score",
+              "displayName": "cvss_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_analysis",
+              "displayName": "ai_analysis",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "new",
+                  "value": "new"
+                },
+                {
+                  "name": "analyzed",
+                  "value": "analyzed"
+                },
+                {
+                  "name": "alerted",
+                  "value": "alerted"
+                },
+                {
+                  "name": "dismissed",
+                  "value": "dismissed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        0
+      ],
+      "id": "3d21a269-16b1-4f58-a2c2-24304d1fc411",
+      "name": "Create or update a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "wIxyWn1Vl4ccSuDL",
+          "name": "airtable capstone"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Create or update a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update a record": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6b0dcda7-a3d3-4de1-9539-4d30ae2fbfc3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a69ec37954977b88a479ebfa185a30fc778ae1a13872bdbe9e26e7b8edafd875"
+  },
+  "id": "f58unvkhnu9WC45l",
+  "tags": []
+}
