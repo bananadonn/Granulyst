@@ -5,6 +5,10 @@
 			"path": "."
 		},
 		{
+			"name": "test-data",
+			"path": "../Documents/Granulyst/Granulyst/test-data"
+		},
+		{
 			"name": "granulyst-frontend",
 			"path": "../AppData/Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/local-agent-mode-sessions/9fe739a7-3ebb-4677-864a-dee1a40b3555/a4103dec-f493-477d-b4b9-1125c6d3720c/local_cd724b17-31ef-4f7c-a9f2-207c9809c6f1/outputs/granulyst-frontend"
 		}
